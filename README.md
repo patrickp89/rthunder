@@ -19,8 +19,8 @@ $ cargo build
 If Cargo displays an error message like "undefined reference to xyz / error: ld returned 1 exit status", your linker
 is not able to find (one or more) referenced functions. Here is what you can do:
 * Make sure that you have installed the libraries mentioned above
-* If the path where those libraries were installed differ, create a symlink, e.g.
+* If the path where those libraries were installed differs, create a symlink, e.g.
 ```bash
 $ ln -s /path/to/your/libs/libcddb.so /usr/lib/x86_64-linux-gnu/libcddb.so
 ```
-* As a last resort you can change the linker path in  linker option to the [build.rs](build.rs) file
+* As a last resort you can change the linker's search path in the [Makefile](native/Makefile) by altering the "-L" flag

@@ -2,9 +2,6 @@
 //! A module that encapsulates all functions realated to
 //! querying a disc info database.
 
-use std::ptr::*;
-use std::ffi::{CString, c_void};
-use std::os::raw::c_char;
 use crate::libcdio_wrapper;
 use crate::libcddb_wrapper;
 
@@ -13,15 +10,26 @@ use crate::libcddb_wrapper;
 pub fn query_db() -> bool {
     println!("[ query_db()           ]  get the default CD device...");
     let default_device_result = libcdio_wrapper::get_default_device();
-
     // TODO: chain this Result and the following ones via map() or and_then() together!
     if default_device_result.is_err() {
-        let e = default_device_result.unwrap();
-        println!("An error occurred: {:?}", e);
+        let e = default_device_result.unwrap_err();
+        println!("An error occurred: {}", e);
         return false;
     }
     let default_device = default_device_result.unwrap();
     println!("[ query_db()           ]  default device is: {:?}", default_device);
+
+
+    println!("[ query_db()           ]  opening CD device...");
+    let open_cdio_result = libcdio_wrapper::open_device(default_device);
+    if open_cdio_result.is_err() {
+        let e = open_cdio_result.unwrap_err();
+        println!("An error occurred: {}", e);
+        return false;
+    }
+    let cdio = open_cdio_result.unwrap();
+    println!("[ query_db()           ]  cdio points to: {:p}", cdio);
+
 
     println!("[ query_db()           ]  get the track count...");
     //track_count: track_t = cdio_get_num_tracks(p_cdio);
@@ -38,5 +46,6 @@ pub fn query_db() -> bool {
     //    cddb_track_get_length(...)
     // }
 
+    libcdio_wrapper::destroy_cdio_env(cdio);
     return true;
 }

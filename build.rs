@@ -17,12 +17,10 @@ fn main() {
         Err(e) => println!("An error occurred: {:?}", e),
     }
 
-    // set the linker path:
+    // set Cargo's linker path:
     println!("cargo:rustc-link-search=target/debug/");
 
-    // println!("cargo:rustc-link-lib=dylib=cdio");
+    // link the two libraries we just created to our Rust application:
     println!("cargo:rustc-link-lib=dylib=cdio-wrapper");
-
-    // println!("cargo:rustc-link-lib=dylib=cddb");
-    //println!("cargo:rustc-link-lib=dylib=cddb-wrapper");
+    println!("cargo:rustc-link-lib=dylib=cddb-wrapper");
 }

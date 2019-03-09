@@ -39,9 +39,10 @@ enum cddb_cat_t {
 }
 
 extern "C" {
-    // wraps: `cddb_disc_t *cddb_disc_new(void);`
-    fn cddb_disc_new() -> cddb_disc_t;
+    /// Wraps `cddb_disc_t * cddb_wrapper_new_disc_t(void);`.
+    #[no_mangle]
+    fn cddb_wrapper_new_disc_t() -> *mut cddb_disc_t;
 
     // wraps: `cddb_track_t *cddb_disc_get_track_first(cddb_disc_t *disc);`
-    fn cddb_disc_get_track_first(disc: *mut cddb_disc_t) -> cddb_track_t;
+    //fn cddb_disc_get_track_first(disc: *mut cddb_disc_t) -> cddb_track_t;
 }
