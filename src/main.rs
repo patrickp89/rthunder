@@ -1,11 +1,13 @@
 //! # rthunder
 //! A GTK+ audio ripper frontend.
 
-pub mod user_interface;
+extern crate libcdio_sys;
+
 pub mod disc_info_db;
-pub mod ripper;
-pub mod libcdio_wrapper;
 pub mod libcddb_wrapper;
+pub mod libcdio_wrapper;
+pub mod ripper;
+pub mod user_interface;
 
 /// Main function. Will launch the GTK+ user interface with
 /// all its functionality.

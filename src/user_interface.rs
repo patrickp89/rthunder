@@ -1,26 +1,22 @@
 extern crate gtk;
 
 use gtk::prelude::*;
-use gtk::{Window, WindowType,
-            Toolbar, ToolButton,
-            Box, Orientation,
-            Image, Button,
-            Grid, Entry, Label,
-            CheckButton, PositionType,
-            ScrolledWindow, TreeView};
-
+use gtk::IconSize;
+use gtk::{
+    Box, Button, CheckButton, Entry, Grid, Image, Label, Orientation, PositionType, ScrolledWindow,
+    ToolButton, Toolbar, TreeView, Window, WindowType,
+};
 
 const APPLICATION_NAME: &str = "rthunder";
 const MAIN_WINDOW_DEFAULT_WIDTH: i32 = 800;
 const MAIN_WINDOW_DEFAULT_HEIGHT: i32 = 600;
-
 
 pub struct RthunderUi {
     window: gtk::Window,
     toolbar: gtk::Toolbar,
     album_grid: gtk::Grid,
     tracklist_scrollwindow: gtk::ScrolledWindow,
-    rip_button: gtk::Button
+    rip_button: gtk::Button,
 }
 
 impl RthunderUi {
@@ -37,7 +33,6 @@ impl RthunderUi {
     }
 }
 
-
 pub fn create_ui() -> RthunderUi {
     let window = create_main_window();
     let toolbar = create_toolbar();
@@ -50,10 +45,9 @@ pub fn create_ui() -> RthunderUi {
         toolbar: toolbar,
         album_grid: album_grid,
         tracklist_scrollwindow: tracklist_scrollwindow,
-        rip_button: rip_button
+        rip_button: rip_button,
     };
 }
-
 
 fn create_main_window() -> gtk::Window {
     let window = Window::new(WindowType::Toplevel);
@@ -62,32 +56,31 @@ fn create_main_window() -> gtk::Window {
     window.set_default_size(MAIN_WINDOW_DEFAULT_WIDTH, MAIN_WINDOW_DEFAULT_HEIGHT);
 
     window.connect_delete_event(|_, _| {
-            gtk::main_quit();
-            Inhibit(false)
-        });
+        gtk::main_quit();
+        Inhibit(false)
+    });
 
     return window;
 }
 
-
 fn create_toolbar() -> gtk::Toolbar {
     let toolbar = Toolbar::new();
 
-    let cddb_lookup_icon = Image::new_from_icon_name("view-refresh", 22); // TODO: size???
-    let cddb_lookup_button = ToolButton::new(&cddb_lookup_icon, "CDDB Lookup");
+    let cddb_lookup_icon = Image::new_from_icon_name(Some("view-refresh"), IconSize::SmallToolbar);
+    let cddb_lookup_button = ToolButton::new(Some(&cddb_lookup_icon), Some("CDDB Lookup"));
     toolbar.add(&cddb_lookup_button);
 
-    let preferences_image = Image::new_from_icon_name("preferences-system", 22); // TODO: size???
-    let preferences_button = ToolButton::new(&preferences_image, "Preferences");
+    let preferences_image =
+        Image::new_from_icon_name(Some("preferences-system"), IconSize::SmallToolbar);
+    let preferences_button = ToolButton::new(Some(&preferences_image), Some("Preferences"));
     toolbar.add(&preferences_button);
 
-    let about_image = Image::new_from_icon_name("help-about", 22); // TODO: size???
-    let about_button = ToolButton::new(&about_image, "Info");
+    let about_image = Image::new_from_icon_name(Some("help-about"), IconSize::SmallToolbar);
+    let about_button = ToolButton::new(Some(&about_image), Some("Info"));
     toolbar.add(&about_button);
 
     return toolbar;
 }
-
 
 fn create_album_entries_and_labels() -> gtk::Grid {
     let grid = Grid::new();
@@ -95,36 +88,73 @@ fn create_album_entries_and_labels() -> gtk::Grid {
     let default_grid_label_width = 1;
     let default_grid_entry_width = 1;
 
-    let album_artist_label = Label::new("Album Artist:");
+    let album_artist_label = Label::new(Some("Album Artist:"));
     let album_artist_entry = Entry::new(); // TODO: create with a buffer assigned!
-    grid.attach(&album_artist_label, 0, 0, default_grid_label_width, default_grid_child_height);
-    grid.attach_next_to(&album_artist_entry, &album_artist_label, PositionType::Right,
-        default_grid_entry_width, default_grid_child_height);
+    grid.attach(
+        &album_artist_label,
+        0,
+        0,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
+    grid.attach_next_to(
+        &album_artist_entry,
+        Some(&album_artist_label),
+        PositionType::Right,
+        default_grid_entry_width,
+        default_grid_child_height,
+    );
 
     let single_artist_checkbutton = CheckButton::new_with_label("Single Artist");
-    grid.attach_next_to(&single_artist_checkbutton, &album_artist_entry, PositionType::Right,
-        default_grid_label_width, default_grid_child_height);
+    grid.attach_next_to(
+        &single_artist_checkbutton,
+        Some(&album_artist_entry),
+        PositionType::Right,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
 
-    let album_artist_label = Label::new("Album Title:");
+    let album_artist_label = Label::new(Some("Album Title:"));
     let album_artist_entry = Entry::new(); // TODO: create with a buffer assigned!
-    grid.attach(&album_artist_label, 0, 1, default_grid_label_width, default_grid_child_height);
-    grid.attach_next_to(&album_artist_entry, &album_artist_label, PositionType::Right,
-        default_grid_entry_width, default_grid_child_height);
+    grid.attach(
+        &album_artist_label,
+        0,
+        1,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
+    grid.attach_next_to(
+        &album_artist_entry,
+        Some(&album_artist_label),
+        PositionType::Right,
+        default_grid_entry_width,
+        default_grid_child_height,
+    );
 
-    let album_artist_label = Label::new("Genre / Year:");
+    let album_artist_label = Label::new(Some("Genre / Year:"));
     let album_artist_entry = Entry::new(); // TODO: create with a buffer assigned!
-    grid.attach(&album_artist_label, 0, 2, default_grid_label_width, default_grid_child_height);
-    grid.attach_next_to(&album_artist_entry, &album_artist_label, PositionType::Right,
-        default_grid_entry_width, default_grid_child_height);
+    grid.attach(
+        &album_artist_label,
+        0,
+        2,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
+    grid.attach_next_to(
+        &album_artist_entry,
+        Some(&album_artist_label),
+        PositionType::Right,
+        default_grid_entry_width,
+        default_grid_child_height,
+    );
 
     // TODO: expand all entry widgets!
 
     return grid;
 }
 
-
 fn create_track_entries_and_labels() -> gtk::ScrolledWindow {
-    let tracklist_scrollwindow = ScrolledWindow::new(None, None);
+    let tracklist_scrollwindow = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
     let tree_view = TreeView::new();
 
     // TODO: ...
@@ -132,7 +162,6 @@ fn create_track_entries_and_labels() -> gtk::ScrolledWindow {
     tracklist_scrollwindow.add(&tree_view);
     return tracklist_scrollwindow;
 }
-
 
 fn create_rip_button() -> gtk::Button {
     return Button::new_with_label("Rip");

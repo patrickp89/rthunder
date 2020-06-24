@@ -1,9 +1,9 @@
 //! # Disc info DB module
-//! A module that encapsulates all functions realated to
+//! A module that encapsulates all functions related to
 //! querying a disc info database.
 
-use crate::libcdio_wrapper;
 use crate::libcddb_wrapper;
+use crate::libcdio_wrapper; // TODO: use crate::libcdio_sys;
 
 /// Accesses the CD device and queries a CD database for
 /// track information.
@@ -17,8 +17,10 @@ pub fn query_db() -> bool {
         return false;
     }
     let default_device = default_device_result.unwrap();
-    println!("[ query_db()           ]  default device is: {:?}", default_device);
-
+    println!(
+        "[ query_db()           ]  default device is: {:?}",
+        default_device
+    );
 
     println!("[ query_db()           ]  opening CD device...");
     let open_cdio_result = libcdio_wrapper::open_device(default_device);
@@ -29,7 +31,6 @@ pub fn query_db() -> bool {
     }
     let cdio = open_cdio_result.unwrap();
     println!("[ query_db()           ]  cdio points to: {:p}", cdio);
-
 
     println!("[ query_db()           ]  get the track count...");
     //track_count: track_t = cdio_get_num_tracks(p_cdio);

@@ -8,12 +8,14 @@ use std::process::Command;
 /// in the special folder "./native". This will build two
 /// library wrappers for libcdio and libcddb respectively.
 fn main() {
-    let status_result = Command::new("make")
-        .current_dir("native/")
-        .status();
+    let status_result = Command::new("make").current_dir("native/").status();
 
     match status_result {
-        Ok(status) =>  if !status.success() { panic!("'make' was not successful! Exit code was: {}", status) },
+        Ok(status) => {
+            if !status.success() {
+                panic!("'make' was not successful! Exit code was: {}", status)
+            }
+        }
         Err(e) => println!("An error occurred: {:?}", e),
     }
 

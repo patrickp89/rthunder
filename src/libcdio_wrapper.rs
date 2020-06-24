@@ -1,9 +1,9 @@
 //! # libcdio Wrapper
 //! A slim wrapper around (some) libcdio functions.
 
-use std::ptr::*;
-use std::ffi::{CString, c_void, CStr};
+use std::ffi::{c_void, CStr, CString};
 use std::os::raw::c_char;
+use std::ptr::*;
 
 /// A struct that describes CD driver information and
 /// CDIO functions.
@@ -12,7 +12,7 @@ use std::os::raw::c_char;
 pub struct CdIo_t {
     driver_id: driver_id_t,
     op: cdio_funcs_t,
-    env: *mut c_void
+    env: *mut c_void,
 }
 
 /// A plethora of possible driver IDs.
@@ -34,7 +34,7 @@ enum driver_id_t {
     DRIVER_CDRDAO,
     DRIVER_BINCUE,
     DRIVER_NRG,
-    DRIVER_DEVICE
+    DRIVER_DEVICE,
 }
 
 /// A dummy struct. The original implementation features a
@@ -42,9 +42,8 @@ enum driver_id_t {
 #[repr(C)]
 #[derive(Clone, Debug)]
 struct cdio_funcs_t {
-    placeholder: *mut c_void
+    placeholder: *mut c_void,
 }
-
 
 extern "C" {
     // ---------- for CDDB access to the disc: ----------
@@ -65,12 +64,11 @@ extern "C" {
     #[no_mangle]
     fn cdio_wrapper_destroy_cdio_env(cdio_env: *mut CdIo_t);
 
-    // ---------- for ripping: ----------
+// ---------- for ripping: ----------
 
-    // char ** cdio_get_devices_with_cap (/*in*/ char *ppsz_search_devices[], cdio_fs_anal_t capabilities, bool b_any);
-    //fn cdio_get_devices_with_cap() -> *const c_char;
+// char ** cdio_get_devices_with_cap (/*in*/ char *ppsz_search_devices[], cdio_fs_anal_t capabilities, bool b_any);
+//fn cdio_get_devices_with_cap() -> *const c_char;
 }
-
 
 /// Gets the name of the system's default CD device.
 pub fn get_default_device() -> Result<String, &'static str> {
@@ -89,7 +87,6 @@ pub fn get_default_device() -> Result<String, &'static str> {
     }
 }
 
-
 /// Opens a CD device for reading.
 pub fn open_device(device: String) -> Result<Box<CdIo_t>, &'static str> {
     unsafe {
@@ -100,7 +97,6 @@ pub fn open_device(device: String) -> Result<Box<CdIo_t>, &'static str> {
     }
 }
 
-
 /// Frees the CDIO environment.
 pub fn destroy_cdio_env(cdio: Box<CdIo_t>) {
     unsafe {
@@ -110,7 +106,6 @@ pub fn destroy_cdio_env(cdio: Box<CdIo_t>) {
         println!("[ destroy_cdio_env()   ]  Done!");
     }
 }
-
 
 pub fn get_devices_with_cap() -> Result<String, &'static str> {
     unsafe {

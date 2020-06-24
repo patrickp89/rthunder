@@ -2,10 +2,12 @@
 A GTK+ audio ripper frontend
 
 ## How to build it
-Install the *Rust* toolchain (e.g. via [Rustup](https://www.rust-lang.org/tools/install)), as well as *gcc*, and *make*.
-Install the *GTK+*, *libcddb2*, and *libcdio-paranoia* libraries as well as their header files. On Debian run:
+Install [Rust](https://www.rust-lang.org/) and Cargo (e.g. via [Rustup](https://www.rust-lang.org/tools/install)).
+You'll also need build essentials (e.g. *gcc* and *make*) as well as a couple of libraries, and their header files. On
+Debian run:
 ```bash
-# apt-get install build-essential libgtk-3-dev libcddb2-dev libcdio-paranoia-dev
+# apt-get install curl build-essential libgtk-3-dev libcddb2-dev libcdio-paranoia-dev libiso9660-dev libudf-dev
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 Clone or download this repository and build via Cargo:
