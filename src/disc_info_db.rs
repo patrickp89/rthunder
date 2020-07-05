@@ -3,50 +3,32 @@
 //! querying a disc info database.
 
 use crate::libcddb_wrapper;
-use crate::libcdio_wrapper; // TODO: use crate::libcdio_sys;
+extern crate libcdio_sys;
+
+use libcdio_sys::{cdio_get_num_tracks, cdio_open, driver_id_t_DRIVER_UNKNOWN, track_t, CdIo_t};
+use std::ptr;
+
+pub type CdDatabaseQuerier = fn() -> Result<Vec<&'static str>, &'static str>;
 
 /// Accesses the CD device and queries a CD database for
 /// track information.
-pub fn query_db() -> bool {
-    println!("[ query_db()           ]  get the default CD device...");
-    let default_device_result = libcdio_wrapper::get_default_device();
-    // TODO: chain this Result and the following ones via map() or and_then() together!
-    if default_device_result.is_err() {
-        let e = default_device_result.unwrap_err();
-        println!("An error occurred: {}", e);
-        return false;
+pub fn query_db() -> Result<Vec<&'static str>, &'static str> {
+    println!("[ query_db()           ]  get the default default driver device...");
+    let p_cdio: *mut CdIo_t = unsafe { cdio_open(ptr::null(), driver_id_t_DRIVER_UNKNOWN) };
+    if p_cdio.is_null() {
+        return Err("Could not open device!");
     }
-    let default_device = default_device_result.unwrap();
     println!(
-        "[ query_db()           ]  default device is: {:?}",
-        default_device
+        "[ query_db()           ]  default driver device is: {:?}",
+        p_cdio
     );
 
-    println!("[ query_db()           ]  opening CD device...");
-    let open_cdio_result = libcdio_wrapper::open_device(default_device);
-    if open_cdio_result.is_err() {
-        let e = open_cdio_result.unwrap_err();
-        println!("An error occurred: {}", e);
-        return false;
-    }
-    let cdio = open_cdio_result.unwrap();
-    println!("[ query_db()           ]  cdio points to: {:p}", cdio);
+    println!("[ query_db()           ]  get the number of tracks...");
+    let track_count: track_t = unsafe { cdio_get_num_tracks(p_cdio) };
+    println!(
+        "[ query_db()           ]  there are {:?} tracks!",
+        track_count
+    );
 
-    println!("[ query_db()           ]  get the track count...");
-    //track_count: track_t = cdio_get_num_tracks(p_cdio);
-
-    //println!("initialize disc struct...");
-    //let disc = cddb_disc_new();
-
-    println!("get the first track...");
-    //let d: *mut cddb_disc_t = null_mut();
-    //let ft = cddb_disc_get_track_first(di);
-
-    // TODO: cddb_disc_get_track_first(disc)
-    // TODO: foreach(cddb_disc_get_track_next(disc)) {
-    //    cddb_track_get_length(...)
-    // }
-
-    libcdio_wrapper::destroy_cdio_env(cdio);
-    return true;
+    return Ok(Vec::new());
 }

@@ -3,9 +3,13 @@ extern crate gtk;
 use gtk::prelude::*;
 use gtk::IconSize;
 use gtk::{
-    Box, Button, CheckButton, Entry, Grid, Image, Label, Orientation, PositionType, ScrolledWindow,
-    ToolButton, Toolbar, TreeView, Window, WindowType,
+    Box, Button, ButtonExt, CheckButton, Entry, Grid, Image, Label, Orientation, PositionType,
+    ScrolledWindow, ToolButton, Toolbar, TreeView, Window, WindowType,
 };
+use std::fs::File;
+
+use crate::disc_info_db::CdDatabaseQuerier;
+use crate::ripper::Ripper;
 
 const APPLICATION_NAME: &str = "rthunder";
 const MAIN_WINDOW_DEFAULT_WIDTH: i32 = 800;
@@ -33,19 +37,19 @@ impl RthunderUi {
     }
 }
 
-pub fn create_ui() -> RthunderUi {
-    let window = create_main_window();
-    let toolbar = create_toolbar();
-    let album_grid = create_album_entries_and_labels();
-    let tracklist_scrollwindow = create_track_entries_and_labels();
-    let rip_button = create_rip_button();
+pub fn create_ui(query_db: CdDatabaseQuerier, rip_cd: Ripper) -> RthunderUi {
+    // query_db() is run when the users clicks the "refresh" button,
+    // but we should try to get the track list (and the corresponding
+    // tracks from the CDDB) initially, too:
+    // TODO: let track_list = query_db();
+    // TODO: let tracklist_scrollwindow = create_track_entries_and_labels(track_list);
 
     return RthunderUi {
-        window: window,
-        toolbar: toolbar,
-        album_grid: album_grid,
-        tracklist_scrollwindow: tracklist_scrollwindow,
-        rip_button: rip_button,
+        window: create_main_window(),
+        toolbar: create_toolbar(query_db),
+        album_grid: create_album_entries_and_labels(),
+        tracklist_scrollwindow: create_track_entries_and_labels(),
+        rip_button: create_rip_button(rip_cd),
     };
 }
 
@@ -63,11 +67,18 @@ fn create_main_window() -> gtk::Window {
     return window;
 }
 
-fn create_toolbar() -> gtk::Toolbar {
+fn create_toolbar(query_db: CdDatabaseQuerier) -> gtk::Toolbar {
     let toolbar = Toolbar::new();
 
     let cddb_lookup_icon = Image::new_from_icon_name(Some("view-refresh"), IconSize::SmallToolbar);
     let cddb_lookup_button = ToolButton::new(Some(&cddb_lookup_icon), Some("CDDB Lookup"));
+    cddb_lookup_button.connect_clicked(move |_| {
+        println!("Looking up disc on CDDB...");
+        match query_db() {
+            Ok(track_list) => println!("all fine! the track list is: ..."), // TODO: then update track list view!
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
+    });
     toolbar.add(&cddb_lookup_button);
 
     let preferences_image =
@@ -163,6 +174,15 @@ fn create_track_entries_and_labels() -> gtk::ScrolledWindow {
     return tracklist_scrollwindow;
 }
 
-fn create_rip_button() -> gtk::Button {
-    return Button::new_with_label("Rip");
+fn create_rip_button(rip_cd: Ripper) -> gtk::Button {
+    let rip_button = Button::new_with_label("Rip");
+    rip_button.connect_clicked(move |_| {
+        println!("Let's rip! :)");
+        match rip_cd() {
+            Ok(ripped_files) => println!("all fine! the files are: ..."),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
+    });
+
+    return rip_button;
 }

@@ -17,14 +17,9 @@ fn main() {
         return;
     }
 
-    // create the GUI:
-    let ui = user_interface::create_ui();
-    ui.show_all();
+    let query_db: disc_info_db::CdDatabaseQuerier = || disc_info_db::query_db();
+    let rip_cd: ripper::Ripper = || ripper::rip_cd();
 
-    disc_info_db::query_db();
-    let r = ripper::rip_cd();
-    match r {
-        Ok(_v) => println!("all fine!"),
-        Err(e) => println!("An error occurred: {:?}", e),
-    }
+    // create the GUI:
+    user_interface::create_ui(query_db, rip_cd).show_all();
 }

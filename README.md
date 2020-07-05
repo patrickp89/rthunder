@@ -1,4 +1,6 @@
 # rthunder
+[![Build Status](https://travis-ci.org/patrickp89/rthunder.svg?branch=master)](https://travis-ci.org/patrickp89/rthunder)
+
 A GTK+ audio ripper frontend
 
 ## How to build it
