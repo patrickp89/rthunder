@@ -8,6 +8,7 @@ use gtk::{
 };
 use std::fs::File;
 
+use crate::cd_helper::{CdCloser, CdOpener, CdPointer, CdPointerWithTrackCount};
 use crate::disc_info_db::CdDatabaseQuerier;
 use crate::ripper::Ripper;
 
@@ -37,29 +38,46 @@ impl RthunderUi {
     }
 }
 
-pub fn create_ui(query_db: CdDatabaseQuerier, rip_cd: Ripper) -> RthunderUi {
-    // query_db() is run when the users clicks the "refresh" button,
-    // but we should try to get the track list (and the corresponding
-    // tracks from the CDDB) initially, too:
-    // TODO: let track_list = query_db();
+pub fn create_ui(
+    disc_pointer: Option<CdPointer>,
+    track_count: Option<u8>,
+    open_disc: CdOpener,
+    query_db: CdDatabaseQuerier,
+    rip_cd: Ripper,
+    close_disc: CdCloser,
+) -> RthunderUi {
     // TODO: let tracklist_scrollwindow = create_track_entries_and_labels(track_list);
 
+    // TODO: disc_pointer must be stateful and _overridden_,
+    // TODO: a) because the initial disc-opening didn't work, or
+    // TODO: b) because the user rips more than a single CD!
+
     return RthunderUi {
-        window: create_main_window(),
-        toolbar: create_toolbar(query_db),
+        window: create_main_window(close_disc, disc_pointer),
+        toolbar: create_toolbar(disc_pointer, open_disc, query_db),
         album_grid: create_album_entries_and_labels(),
-        tracklist_scrollwindow: create_track_entries_and_labels(),
+        tracklist_scrollwindow: create_track_entries_and_labels(track_count),
         rip_button: create_rip_button(rip_cd),
     };
 }
 
-fn create_main_window() -> gtk::Window {
+fn create_main_window(close_disc: CdCloser, disc_pointer: Option<CdPointer>) -> gtk::Window {
     let window = Window::new(WindowType::Toplevel);
 
     window.set_title(APPLICATION_NAME);
     window.set_default_size(MAIN_WINDOW_DEFAULT_WIDTH, MAIN_WINDOW_DEFAULT_HEIGHT);
 
-    window.connect_delete_event(|_, _| {
+    window.connect_delete_event(move |_, _| {
+        match disc_pointer {
+            Some(p) => {
+                match close_disc(p) {
+                    // TODO: nested pattern matching is ugly -> use Optio.err()!
+                    Ok(_) => (),
+                    Err(e) => println!("An error occurred: {:?}", e),
+                }
+            }
+            None => println!("No valid disc pointer, I didn't call cdio_destroy()!"),
+        }
         gtk::main_quit();
         Inhibit(false)
     });
@@ -67,17 +85,29 @@ fn create_main_window() -> gtk::Window {
     return window;
 }
 
-fn create_toolbar(query_db: CdDatabaseQuerier) -> gtk::Toolbar {
+fn create_toolbar(
+    disc_pointer: Option<CdPointer>,
+    open_disc: CdOpener,
+    query_db: CdDatabaseQuerier,
+) -> gtk::Toolbar {
     let toolbar = Toolbar::new();
 
     let cddb_lookup_icon = Image::new_from_icon_name(Some("view-refresh"), IconSize::SmallToolbar);
     let cddb_lookup_button = ToolButton::new(Some(&cddb_lookup_icon), Some("CDDB Lookup"));
     cddb_lookup_button.connect_clicked(move |_| {
-        println!("Looking up disc on CDDB...");
-        match query_db() {
-            Ok(track_list) => println!("all fine! the track list is: ..."), // TODO: then update track list view!
-            Err(e) => println!("An error occurred: {:?}", e),
-        }
+        match disc_pointer {
+            Some(p) => {
+                println!("Looking up disc on CDDB...");
+                match query_db(p) {
+                    Ok(track_list) => println!("all fine! the track list is: ..."), // TODO: then update track list view!
+                    Err(e) => println!("An error occurred: {:?}", e),
+                }
+            }
+            None => {
+                println!("No opened disc device!");
+                // TODO: try to open the default one!
+            }
+        };
     });
     toolbar.add(&cddb_lookup_button);
 
@@ -164,7 +194,7 @@ fn create_album_entries_and_labels() -> gtk::Grid {
     return grid;
 }
 
-fn create_track_entries_and_labels() -> gtk::ScrolledWindow {
+fn create_track_entries_and_labels(track_count: Option<u8>) -> gtk::ScrolledWindow {
     let tracklist_scrollwindow = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
     let tree_view = TreeView::new();
 
