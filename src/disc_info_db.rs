@@ -17,7 +17,5 @@ pub type CdDatabaseQuerier = fn(CdPointer) -> Result<Vec<&'static str>, &'static
 /// Queries a CD database for track information. Returns the track names
 /// or an error message.
 pub fn query_db(disc_pointer: CdPointer) -> Result<Vec<&'static str>, &'static str> {
-    // TODO: ...
-
-    return Ok(Vec::new());
+    return Err("TODO: not yet implemented!");
 }

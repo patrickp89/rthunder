@@ -5,7 +5,8 @@
 extern crate libcdio_sys;
 
 use libcdio_sys::{
-    cdio_destroy, cdio_get_num_tracks, cdio_open, driver_id_t_DRIVER_UNKNOWN, track_t, CdIo_t,
+    cdio_destroy, cdio_get_devices, cdio_get_num_tracks, cdio_open, driver_id_t_DRIVER_UNKNOWN,
+    track_t, CdIo_t,
 };
 use std::ptr;
 
@@ -19,23 +20,25 @@ pub type CdCloser = fn(p_cdio: CdPointer) -> Result<bool, &'static str>;
 /// or an error message.
 pub fn open_disc() -> Result<CdPointerWithTrackCount, &'static str> {
     println!("[ query_db()           ]  get the default default driver device...");
+    // TODO: use libcdio_sys::cdio_get_default_device() instead?
     let p_cdio: CdPointer = unsafe { cdio_open(ptr::null(), driver_id_t_DRIVER_UNKNOWN) };
-    if p_cdio.is_null() {
-        return Err("Could not open device!");
-    }
-    println!(
-        "[ query_db()           ]  default driver device is: {:?}",
-        p_cdio
-    );
+    return if p_cdio.is_null() {
+        Err("Could not open device!")
+    } else {
+        println!(
+            "[ query_db()           ]  default driver device is: {:?}",
+            p_cdio
+        );
 
-    println!("[ query_db()           ]  get the number of tracks...");
-    let track_count: track_t = unsafe { cdio_get_num_tracks(p_cdio) };
-    println!(
-        "[ query_db()           ]  there are {:?} tracks!",
-        track_count
-    );
+        println!("[ query_db()           ]  get the number of tracks...");
+        let track_count: track_t = unsafe { cdio_get_num_tracks(p_cdio) };
+        println!(
+            "[ query_db()           ]  there are {:?} tracks!",
+            track_count
+        );
 
-    return Ok((p_cdio, track_count));
+        Ok((p_cdio, track_count))
+    };
 }
 
 /// Attempts to gracefully destroy the disc pointer.
@@ -45,5 +48,16 @@ pub fn destroy_disc_pointer(p_cdio: CdPointer) -> Result<bool, &'static str> {
     } else {
         unsafe { cdio_destroy(p_cdio) };
         Ok(true)
+    };
+}
+
+/// Looks up all known devices.
+pub fn get_all_devices() -> Result<Vec<&'static str>, &'static str> {
+    let devices = unsafe { cdio_get_devices(driver_id_t_DRIVER_UNKNOWN) };
+    return if devices.is_null() {
+        Err("Could not find any devices!")
+    } else {
+        // TODO: println!("[ get_all_devices() ]  device with capabilities is: {:?}", s);
+        unimplemented!("not yet implemented!");
     };
 }
