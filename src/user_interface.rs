@@ -3,8 +3,8 @@ extern crate gtk;
 use gtk::prelude::*;
 use gtk::IconSize;
 use gtk::{
-    Box, Button, ButtonExt, CheckButton, Entry, Grid, Image, Label, Orientation, PositionType,
-    ScrolledWindow, ToolButton, Toolbar, TreeView, Window, WindowType,
+    Box, Button, ButtonExt, CheckButton, Dialog, Entry, Grid, Image, Label, Orientation,
+    PositionType, ScrolledWindow, ToolButton, Toolbar, TreeView, Window, WindowType,
 };
 use std::fs::File;
 
@@ -22,6 +22,7 @@ pub struct RthunderUi {
     album_grid: gtk::Grid,
     tracklist_scrollwindow: gtk::ScrolledWindow,
     rip_button: gtk::Button,
+    options_dialog: gtk::Dialog,
 }
 
 impl RthunderUi {
@@ -58,6 +59,7 @@ pub fn create_ui(
         album_grid: create_album_entries_and_labels(),
         tracklist_scrollwindow: create_track_entries_and_labels(track_count),
         rip_button: create_rip_button(rip_cd),
+        options_dialog: create_options_dialog(),
     };
 }
 
@@ -92,7 +94,7 @@ fn create_toolbar(
 ) -> gtk::Toolbar {
     let toolbar = Toolbar::new();
 
-    let cddb_lookup_icon = Image::new_from_icon_name(Some("view-refresh"), IconSize::SmallToolbar);
+    let cddb_lookup_icon = Image::from_icon_name(Some("view-refresh"), IconSize::SmallToolbar);
     let cddb_lookup_button = ToolButton::new(Some(&cddb_lookup_icon), Some("CDDB Lookup"));
     cddb_lookup_button.connect_clicked(move |_| {
         match disc_pointer {
@@ -112,11 +114,14 @@ fn create_toolbar(
     toolbar.add(&cddb_lookup_button);
 
     let preferences_image =
-        Image::new_from_icon_name(Some("preferences-system"), IconSize::SmallToolbar);
+        Image::from_icon_name(Some("preferences-system"), IconSize::SmallToolbar);
     let preferences_button = ToolButton::new(Some(&preferences_image), Some("Preferences"));
+    preferences_button.connect_clicked(|_| {
+        // TODO: show options_dialog!
+    });
     toolbar.add(&preferences_button);
 
-    let about_image = Image::new_from_icon_name(Some("help-about"), IconSize::SmallToolbar);
+    let about_image = Image::from_icon_name(Some("help-about"), IconSize::SmallToolbar);
     let about_button = ToolButton::new(Some(&about_image), Some("Info"));
     toolbar.add(&about_button);
 
@@ -146,7 +151,7 @@ fn create_album_entries_and_labels() -> gtk::Grid {
         default_grid_child_height,
     );
 
-    let single_artist_checkbutton = CheckButton::new_with_label("Single Artist");
+    let single_artist_checkbutton = CheckButton::with_label("Single Artist");
     grid.attach_next_to(
         &single_artist_checkbutton,
         Some(&album_artist_entry),
@@ -205,7 +210,7 @@ fn create_track_entries_and_labels(track_count: Option<u8>) -> gtk::ScrolledWind
 }
 
 fn create_rip_button(rip_cd: Ripper) -> gtk::Button {
-    let rip_button = Button::new_with_label("Rip");
+    let rip_button = Button::with_label("Rip");
     rip_button.connect_clicked(move |_| {
         println!("Let's rip! :)");
         match rip_cd() {
@@ -215,4 +220,12 @@ fn create_rip_button(rip_cd: Ripper) -> gtk::Button {
     });
 
     return rip_button;
+}
+
+fn create_options_dialog() -> Dialog {
+    let options_dialog = Dialog::new();
+    // TODO: use with_buttons(...) instead!
+    // TODO: display a dropdown box with all available disc devices
+    // TODO: display other stuff, e.g. available mp3 encodings etc.
+    return options_dialog;
 }
