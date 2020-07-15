@@ -9,7 +9,6 @@ use crate::ripper::Ripper;
 
 pub mod cd_helper;
 pub mod disc_info_db;
-pub mod libcddb_wrapper;
 pub mod ripper;
 pub mod user_interface;
 

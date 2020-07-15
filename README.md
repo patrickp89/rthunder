@@ -1,7 +1,7 @@
 # rthunder
 [![Build Status](https://travis-ci.org/patrickp89/rthunder.svg?branch=master)](https://travis-ci.org/patrickp89/rthunder)
 
-A GTK+ audio ripper frontend
+A GTK+ audio ripper frontend.
 
 ## How to build it
 Install [Rust](https://www.rust-lang.org/) and Cargo (e.g. via [Rustup](https://www.rust-lang.org/tools/install)).

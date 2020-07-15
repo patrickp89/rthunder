@@ -2,7 +2,7 @@
 //! A module that encapsulates all functions related to
 //! querying a disc info database.
 
-use crate::libcddb_wrapper;
+extern crate libcddb_sys;
 extern crate libcdio_sys;
 
 use libcdio_sys::{

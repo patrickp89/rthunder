@@ -2,7 +2,6 @@
 //! A module that encapsulates all functions realated to
 //! ripping an audio disc.
 
-use crate::libcddb_wrapper;
 use std::fs::File;
 
 pub type Ripper = fn() -> Result<Vec<File>, &'static str>;
