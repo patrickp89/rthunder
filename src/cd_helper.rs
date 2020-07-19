@@ -10,6 +10,11 @@ use libcdio_sys::{
 };
 use std::ptr;
 
+pub struct RawDiscInfo {
+    pub disc_length: u32,
+    pub disc_toc: Vec<i32>,
+}
+
 pub type CdPointer = *mut CdIo_t;
 pub type CdPointerWithTrackCount = (CdPointer, track_t);
 
@@ -60,4 +65,16 @@ pub fn get_all_devices() -> Result<Vec<&'static str>, &'static str> {
         // TODO: println!("[ get_all_devices() ]  device with capabilities is: {:?}", s);
         unimplemented!("not yet implemented!");
     };
+}
+
+pub fn read_disc_toc(p_cdio: CdPointer) -> Result<RawDiscInfo, &'static str> {
+    println!("Reading disc TOC...");
+    // TODO: implement this function!
+    let disc_info = RawDiscInfo {
+        disc_length: 3822,
+        disc_toc: vec![
+            150, 28690, 51102, 75910, 102682, 121522, 149040, 175772, 204387, 231145, 268065,
+        ],
+    };
+    return Ok(disc_info);
 }
