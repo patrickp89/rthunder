@@ -8,5 +8,6 @@ edition = "2018"
 
 [dependencies]
 gtk = { version = "0.9.0", features = ["v3_16"] }
+glib = "^0.10.1"
 libcdio-sys = "0.3.0"
 libcddb-sys = { git  = "https://github.com/patrickp89/libcddb-sys" }

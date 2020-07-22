@@ -1,13 +1,13 @@
-extern crate gtk;
-
 use gtk::prelude::*;
 use gtk::IconSize;
 use gtk::{
-    Box, Button, ButtonExt, CheckButton, Dialog, Entry, Grid, Image, Label, Orientation,
-    PositionType, ScrolledWindow, ToolButton, Toolbar, TreeView, Window, WindowType,
+    Box, Button, ButtonExt, CheckButton, ComboBoxText, Dialog, Entry, Grid, Image, Label,
+    Orientation, PositionType, ScrolledWindow, ToolButton, Toolbar, TreeView, Window, WindowType,
 };
+
 use std::fs::File;
 use std::ptr; // TODO: remove!
+use std::rc::Rc;
 
 use crate::cd_helper::{destroy_disc_pointer, read_disc_toc, CdPointer};
 use crate::disc_info_db::query_db;
@@ -47,10 +47,12 @@ pub fn create_ui(disc_pointer: Option<CdPointer>, track_count: Option<u8>) -> Rt
     // TODO: a) because the initial disc-opening didn't work, or
     // TODO: b) because the user rips more than a single CD!
 
+    let (album_grid, album_gui_widgets) = create_album_entries_and_labels();
+
     return RthunderUi {
         window: create_main_window(disc_pointer),
-        toolbar: create_toolbar(disc_pointer),
-        album_grid: create_album_entries_and_labels(),
+        toolbar: create_toolbar(disc_pointer, album_gui_widgets.rc_disc_choice_combobox),
+        album_grid,
         tracklist_scrollwindow: create_track_entries_and_labels(track_count),
         rip_button: create_rip_button(),
         options_dialog: create_options_dialog(),
@@ -81,26 +83,16 @@ fn create_main_window(disc_pointer: Option<CdPointer>) -> gtk::Window {
     return window;
 }
 
-fn create_toolbar(disc_pointer: Option<CdPointer>) -> gtk::Toolbar {
+fn create_toolbar(
+    disc_pointer: Option<CdPointer>,
+    rc_disc_choice_combobox: Rc<ComboBoxText>,
+) -> gtk::Toolbar {
     let toolbar = Toolbar::new();
 
     let cddb_lookup_icon = Image::from_icon_name(Some("view-refresh"), IconSize::SmallToolbar);
     let cddb_lookup_button = ToolButton::new(Some(&cddb_lookup_icon), Some("CDDB Lookup"));
     cddb_lookup_button.connect_clicked(move |_| {
-        let disc_pointer = Some(ptr::null_mut()); // TODO: remove!
-        match disc_pointer {
-            Some(p) => {
-                let tlr = read_disc_toc(p).and_then(|disc_info| query_db(disc_info));
-                match tlr {
-                    Ok(track_list) => println!("all fine! the track list is: ..."), // TODO: then update track list view!
-                    Err(e) => println!("An error occurred: {:?}", e),
-                }
-            }
-            None => {
-                println!("No opened disc device!");
-                // TODO: try to open the default one!
-            }
-        };
+        query_matching_discs(rc_disc_choice_combobox.clone());
     });
     toolbar.add(&cddb_lookup_button);
 
@@ -119,18 +111,68 @@ fn create_toolbar(disc_pointer: Option<CdPointer>) -> gtk::Toolbar {
     return toolbar;
 }
 
-fn create_album_entries_and_labels() -> gtk::Grid {
+fn query_matching_discs(
+    /*disc_pointer: Option<CdPointer>*/ rc_disc_choice_combobox: Rc<ComboBoxText>,
+) {
+    let disc_pointer = Some(ptr::null_mut()); // TODO: remove!
+    match disc_pointer {
+        Some(p) => {
+            let discs_result = read_disc_toc(p).and_then(|disc_info| query_db(disc_info));
+            match discs_result {
+                Ok(discs) => {
+                    let disc_choice_combobox = rc_disc_choice_combobox.as_ref();
+                    disc_choice_combobox.remove_all();
+                    for disc in discs {
+                        disc_choice_combobox.append_text(&disc.to_pretty_string());
+                    }
+                }
+                Err(e) => println!("An error occurred: {:?}", e),
+            }
+        }
+        None => {
+            println!("No opened disc device!");
+            // TODO: try to open the default one!
+        }
+    };
+}
+
+struct AlbumGuiWidgets {
+    rc_disc_choice_combobox: Rc<ComboBoxText>,
+    album_artist_entry: Entry,
+    album_title_entry: Entry,
+    album_genre_entry: Entry,
+    album_year_entry: Entry,
+}
+
+fn create_album_entries_and_labels() -> (Grid, AlbumGuiWidgets) {
     let grid = Grid::new();
     let default_grid_child_height = 1;
     let default_grid_label_width = 1;
     let default_grid_entry_width = 1;
+
+    let disc_choice_combobox = ComboBoxText::new();
+    let disc_choice_label = Label::new(Some("Disc:"));
+    grid.attach(
+        &disc_choice_label,
+        0,
+        0,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
+    grid.attach_next_to(
+        &disc_choice_combobox,
+        Some(&disc_choice_label),
+        PositionType::Right,
+        default_grid_entry_width,
+        default_grid_child_height,
+    );
 
     let album_artist_label = Label::new(Some("Album Artist:"));
     let album_artist_entry = Entry::new(); // TODO: create with a buffer assigned!
     grid.attach(
         &album_artist_label,
         0,
-        0,
+        1,
         default_grid_label_width,
         default_grid_child_height,
     );
@@ -151,43 +193,66 @@ fn create_album_entries_and_labels() -> gtk::Grid {
         default_grid_child_height,
     );
 
-    let album_artist_label = Label::new(Some("Album Title:"));
-    let album_artist_entry = Entry::new(); // TODO: create with a buffer assigned!
+    let album_title_label = Label::new(Some("Album Title:"));
+    let album_title_entry = Entry::new(); // TODO: create with a buffer assigned!
     grid.attach(
-        &album_artist_label,
-        0,
-        1,
-        default_grid_label_width,
-        default_grid_child_height,
-    );
-    grid.attach_next_to(
-        &album_artist_entry,
-        Some(&album_artist_label),
-        PositionType::Right,
-        default_grid_entry_width,
-        default_grid_child_height,
-    );
-
-    let album_artist_label = Label::new(Some("Genre / Year:"));
-    let album_artist_entry = Entry::new(); // TODO: create with a buffer assigned!
-    grid.attach(
-        &album_artist_label,
+        &album_title_label,
         0,
         2,
         default_grid_label_width,
         default_grid_child_height,
     );
     grid.attach_next_to(
-        &album_artist_entry,
-        Some(&album_artist_label),
+        &album_title_entry,
+        Some(&album_title_label),
         PositionType::Right,
         default_grid_entry_width,
         default_grid_child_height,
     );
 
-    // TODO: expand all entry widgets!
+    let album_genre_label = Label::new(Some("Genre:"));
+    let album_genre_entry = Entry::new(); // TODO: create with a buffer assigned!
+    grid.attach(
+        &album_genre_label,
+        0,
+        3,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
+    grid.attach_next_to(
+        &album_genre_entry,
+        Some(&album_genre_label),
+        PositionType::Right,
+        default_grid_entry_width,
+        default_grid_child_height,
+    );
 
-    return grid;
+    let album_year_label = Label::new(Some("Year:"));
+    let album_year_entry = Entry::new(); // TODO: create with a buffer assigned!
+    grid.attach(
+        &album_year_label,
+        0,
+        4,
+        default_grid_label_width,
+        default_grid_child_height,
+    );
+    grid.attach_next_to(
+        &album_year_entry,
+        Some(&album_year_label),
+        PositionType::Right,
+        default_grid_entry_width,
+        default_grid_child_height,
+    );
+
+    let album_gui_widgets = AlbumGuiWidgets {
+        rc_disc_choice_combobox: Rc::new(disc_choice_combobox),
+        album_artist_entry,
+        album_title_entry,
+        album_genre_entry,
+        album_year_entry,
+    };
+
+    return (grid, album_gui_widgets);
 }
 
 fn create_track_entries_and_labels(track_count: Option<u8>) -> gtk::ScrolledWindow {

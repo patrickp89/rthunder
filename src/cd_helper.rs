@@ -2,8 +2,6 @@
 //! A helper module that deals with opening/closing
 //! disc devices and so forth.
 
-extern crate libcdio_sys;
-
 use libcdio_sys::{
     cdio_destroy, cdio_get_devices, cdio_get_num_tracks, cdio_open, driver_id_t_DRIVER_UNKNOWN,
     track_t, CdIo_t,

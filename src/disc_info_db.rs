@@ -6,7 +6,7 @@ use crate::cd_helper::RawDiscInfo;
 use libcddb_sys::*;
 use std::ffi::{CStr, CString};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Disc {
     pub disc_id: u32,
     pub artist: String,
@@ -47,8 +47,12 @@ pub fn query_db(disc_info: RawDiscInfo) -> Result<Vec<Disc>, &'static str> {
     }
 
     unsafe { cddb_disc_destroy(raw_disc) };
-    let distinct_discs: Vec<Disc> = discs; // TODO: filter duplicate discs (e.g. by disc_id)!
-    return Ok(distinct_discs);
+
+    // remove duplicates, by disc ID:
+    discs.sort_by(|a, b| a.disc_id.cmp(&b.disc_id));
+    discs.dedup_by(|a, b| a.disc_id == b.disc_id);
+
+    return Ok(discs);
 }
 
 /// Creates a libcddb network connection structure.
@@ -115,5 +119,10 @@ impl Disc {
             year,
             track_count,
         }
+    }
+
+    /// Returns a pretty-printed string with the most important disc info.
+    pub fn to_pretty_string(&self) -> String {
+        format!("{}, {}, {}, {}", self.artist, self.title, self.year, self.genre)
     }
 }
