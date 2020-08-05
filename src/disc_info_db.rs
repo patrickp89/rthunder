@@ -123,6 +123,9 @@ impl Disc {
 
     /// Returns a pretty-printed string with the most important disc info.
     pub fn to_pretty_string(&self) -> String {
-        format!("{}, {}, {}, {}", self.artist, self.title, self.year, self.genre)
+        format!(
+            "{}, {}, {}, {}",
+            self.artist, self.title, self.year, self.genre
+        )
     }
 }
