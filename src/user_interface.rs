@@ -19,13 +19,14 @@ const APPLICATION_NAME: &str = "rthunder";
 const MAIN_WINDOW_DEFAULT_WIDTH: i32 = 800;
 const MAIN_WINDOW_DEFAULT_HEIGHT: i32 = 600;
 
-struct RthunderUi {
+pub struct RthunderUi {
     window: Window,
     toolbar: Toolbar,
     album_grid: Grid,
     tracklist_scrollwindow: ScrolledWindow,
     rip_button: Button,
     options_dialog: Dialog,
+    pub album_gui_widgets: Rc<RefCell<AlbumGuiWidgets>>,
 }
 
 impl RthunderUi {
@@ -52,7 +53,7 @@ pub fn glue_widgets_together(
     tracklist_scrollwindow: ScrolledWindow,
     window: Window,
     album_gui_widgets: AlbumGuiWidgets,
-) {
+) -> RthunderUi {
     // TODO: disc_pointer must be stateful and _overridden_,
     // TODO: a) because the initial disc-opening didn't work, or
     // TODO: b) because the user rips more than a single CD!
@@ -93,15 +94,15 @@ pub fn glue_widgets_together(
         Inhibit(false)
     });
 
-    let ui = RthunderUi {
+    return RthunderUi {
         window,
         toolbar,
         album_grid,
         tracklist_scrollwindow,
         rip_button: create_rip_button(),
         options_dialog: create_options_dialog(),
+        album_gui_widgets: album_gui_widgets.clone()
     };
-    ui.show_all();
 }
 
 pub fn create_main_window() -> Window {
@@ -138,6 +139,7 @@ pub fn create_toolbar() -> (Toolbar, ToolButton, ToolButton, ToolButton) {
 fn query_matching_discs(
     // disc_pointer: Option<CdPointer>
     rc_album_gui_widgets: Rc<RefCell<AlbumGuiWidgets>>,
+    // mut discs: RefMut<HashMap<u32, Disc>>,
     rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
 ) {
     let disc_pointer = Some(ptr::null_mut()); // TODO: remove!
@@ -173,11 +175,11 @@ fn query_matching_discs(
 }
 
 pub struct AlbumGuiWidgets {
-    disc_choice_combobox: ComboBoxText,
-    album_artist_entrybuffer: EntryBuffer,
-    album_title_entrybuffer: EntryBuffer,
-    album_genre_entrybuffer: EntryBuffer,
-    album_year_entrybuffer: EntryBuffer,
+    pub disc_choice_combobox: ComboBoxText,
+    pub album_artist_entrybuffer: EntryBuffer,
+    pub album_title_entrybuffer: EntryBuffer,
+    pub album_genre_entrybuffer: EntryBuffer,
+    pub album_year_entrybuffer: EntryBuffer,
 }
 
 pub fn create_album_entries() -> (Grid, AlbumGuiWidgets) {
