@@ -1,7 +1,7 @@
 [package]
 name = "rthunder"
 description = "A GTK+ audio ripper frontend"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["patrickp89 <patrickpreuss@netherspace.de>"]
 license-file = "LICENSE"
 edition = "2018"
@@ -10,7 +10,7 @@ edition = "2018"
 gtk = { version = "0.9.0", features = ["v3_16"] }
 gtk-test = "0.6.1"
 glib = "^0.10.1"
-libcdio-sys = { git = "https://github.com/patrickp89/libcdio-sys", branch = "chore/bump-versions" }
+libcdio-sys = { git = "https://github.com/patrickp89/libcdio-sys", branch = "chore/bump-dep-version" }
 libcddb-sys = { git = "https://github.com/patrickp89/libcddb-sys" }
 
 [[test]]

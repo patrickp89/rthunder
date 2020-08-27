@@ -618,7 +618,7 @@ dependencies = [
 [[package]]
 name = "libcdio-sys"
 version = "0.3.0"
-source = "git+https://github.com/patrickp89/libcdio-sys?branch=chore/bump-versions#65086d2a8e104128e1127a15d625748883ce7796"
+source = "git+https://github.com/patrickp89/libcdio-sys?branch=chore/bump-dep-version#283882f0a4c72bfc32f0941e3e40c3613ed3d4b5"
 dependencies = [
  "bindgen",
 ]
@@ -836,7 +836,7 @@ checksum = "26412eb97c6b088a6997e05f69403a802a92d520de2f8e63c2b65f9e0f47c4e8"
 
 [[package]]
 name = "rthunder"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "glib",
  "gtk",
@@ -895,9 +895,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.38"
+version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e69abc24912995b3038597a7a593be5053eb0fb44f3cc5beec0deb421790c1f4"
+checksum = "891d8d6567fe7c7f8835a3a98af4208f3846fba258c1bc3c31d6e506239f11f9"
 dependencies = [
  "proc-macro2",
  "quote",

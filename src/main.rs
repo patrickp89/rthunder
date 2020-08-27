@@ -1,12 +1,7 @@
 //! # rthunder
 //! A GTK+ audio ripper frontend.
 
-use std::cell::{Ref, RefCell, RefMut};
-use std::collections::HashMap;
-use std::rc::Rc;
-
 use rthunder::*;
-// pub mod lib;
 
 /// Main function. Will launch the user interface with
 /// all its magic.

@@ -1,8 +1,8 @@
 use gtk::prelude::*;
 use gtk::{
-    Box, Button, ButtonExt, CheckButton, ComboBoxText, Dialog, Entry, EntryBuffer, Grid, IconSize,
-    Image, Label, Orientation, PositionType, ScrolledWindow, ToolButton, Toolbar, TreeView, Window,
-    WindowType,
+    Box, Button, ButtonExt, CellRendererText, CheckButton, ComboBoxText, Dialog, Entry,
+    EntryBuffer, Grid, IconSize, Image, Label, ListStore, Orientation, PositionType,
+    ScrolledWindow, ToolButton, Toolbar, TreeView, TreeViewColumn, Window, WindowType,
 };
 
 use std::cell::{Ref, RefCell, RefMut};
@@ -45,7 +45,8 @@ impl RthunderUi {
 
 pub fn glue_widgets_together(
     disc_pointer: Option<CdPointer>,
-    discs: Rc<RefCell<HashMap<u32, Disc>>>,
+    rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
+    rc_currently_chosen_disc: Rc<RefCell<Option<u32>>>,
     toolbar: Toolbar,
     album_grid: Grid,
     cddb_lookup_button: ToolButton,
@@ -61,7 +62,7 @@ pub fn glue_widgets_together(
     let album_gui_widgets = Rc::new(RefCell::new(album_gui_widgets));
 
     let album_gui_widgets_clone = album_gui_widgets.clone();
-    let discs_clone = discs.clone(); // TODO: redundant?!
+    let discs_clone = rc_discs.clone(); // TODO: redundant?!
     cddb_lookup_button.connect_clicked(move |_| {
         query_matching_discs(album_gui_widgets_clone.clone(), discs_clone.clone());
     });
@@ -71,12 +72,17 @@ pub fn glue_widgets_together(
     });
 
     let album_gui_widgets_clone2 = album_gui_widgets.clone();
-    let discs_clone2 = discs.clone(); // TODO: redundant?!
+    let discs_clone2 = rc_discs.clone(); // TODO: redundant?!
+    let currently_chosen_disc_clone = rc_currently_chosen_disc.clone(); // TODO: redundant?!
     album_gui_widgets
         .borrow()
         .disc_choice_combobox
         .connect_changed(move |_| {
-            choose_disc(album_gui_widgets_clone2.clone(), discs_clone2.clone())
+            choose_disc(
+                album_gui_widgets_clone2.clone(),
+                discs_clone2.clone(),
+                currently_chosen_disc_clone.clone(),
+            )
         });
 
     window.connect_delete_event(move |_, _| {
@@ -101,7 +107,7 @@ pub fn glue_widgets_together(
         tracklist_scrollwindow,
         rip_button: create_rip_button(),
         options_dialog: create_options_dialog(),
-        album_gui_widgets: album_gui_widgets.clone()
+        album_gui_widgets: album_gui_widgets.clone(),
     };
 }
 
@@ -300,6 +306,7 @@ pub fn create_album_entries() -> (Grid, AlbumGuiWidgets) {
 fn choose_disc(
     rc_album_gui_widgets: Rc<RefCell<AlbumGuiWidgets>>,
     rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
+    rc_currently_chosen_disc: Rc<RefCell<Option<u32>>>,
 ) {
     let discs: Ref<HashMap<u32, Disc>> = rc_discs.borrow();
     // TODO: this borrow ^^^ fails with a panic when __querying the disc__ a second time!
@@ -324,7 +331,11 @@ fn choose_disc(
                 .as_str()
                 .parse::<u32>()
                 .expect("Could not parse disc ID!");
-            println!(" the selected disc ID is: {}", id);
+            println!(" the selected disc ID is: {}", id); // TODO: delete!
+
+            // set the global state (i.e. the current disc id):
+            rc_currently_chosen_disc.replace_with(|_| Some(id));
+
             let disc_option = discs.get(&id);
             match disc_option {
                 Some(disc) => {
@@ -349,11 +360,81 @@ fn choose_disc(
     }
 }
 
-pub fn create_tracklist_entries(track_count: Option<u8>) -> ScrolledWindow {
+fn create_new_tracklist_liststore() -> ListStore {
+    ListStore::new(&[
+        u32::static_type(),    // the track number
+        String::static_type(), // the track title
+    ])
+}
+
+fn create_model_from_album_tracks(disc_option: Option<&Disc>) -> ListStore {
+    let model = create_new_tracklist_liststore();
+    match disc_option {
+        None => create_new_tracklist_liststore(),
+        Some(disc) => {
+            // TODO:
+            let entries = &[
+                "TODO",
+                "multi",
+                "dimensional",
+                "mapping",
+                "from",
+                "disc",
+                "instead",
+            ];
+            for (i, entry) in entries.iter().enumerate() {
+                model.insert_with_values(None, &[0, 1], &[&(i as u32 + 1), &entry]);
+            }
+            model
+        }
+    }
+}
+
+fn create_dummy_tracklist_model() -> ListStore {
+    let default_track_count = 1 as u8;
+    let model = create_new_tracklist_liststore();
+    for i in 0..default_track_count {
+        model.insert_with_values(None, &[0, 1], &[&(i as u32), &""]);
+    }
+    model
+}
+
+fn add_column(tree_view: &TreeView, model_id: i32, title: &str) -> i32 {
+    let column = TreeViewColumn::new();
+    let cell = CellRendererText::new();
+
+    column.pack_start(&cell, true);
+    column.add_attribute(&cell, "text", model_id);
+    column.set_title(title);
+
+    tree_view.insert_column(&column, -1)
+}
+
+pub fn create_tracklist_entries(
+    rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
+    rc_currently_chosen_disc: Rc<RefCell<Option<u32>>>,
+) -> ScrolledWindow {
     let tracklist_scrollwindow = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
     let tree_view = TreeView::new();
 
-    // TODO: ...
+    // create the tracklist rows (i.e. the album tracks):
+    let currently_chosen_disc = rc_currently_chosen_disc.borrow().clone();
+    let album_tracks_model = match currently_chosen_disc {
+        // TODO: pick the current disc from the discs hashmap!
+        Some(disc_id) => {
+            let discs: Ref<HashMap<u32, Disc>> = rc_discs.borrow();
+            let disc_option = discs.get(&disc_id);
+            create_model_from_album_tracks(disc_option)
+        }
+        None => create_dummy_tracklist_model(),
+    };
+    tree_view.set_model(Some(&album_tracks_model));
+
+    // ...and the tracklist columns:
+    let tracklist_column_titles = vec!["Track", "Title"];
+    for (i, title) in tracklist_column_titles.iter().enumerate() {
+        add_column(&tree_view, i as i32, title);
+    }
 
     tracklist_scrollwindow.add(&tree_view);
     return tracklist_scrollwindow;

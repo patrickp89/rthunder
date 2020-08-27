@@ -22,6 +22,16 @@ fn main() {
 
     let ui = create_ui(None, None);
     let album_gui_widgets = ui.album_gui_widgets.borrow();
-    let album_artist_entrybuffer: &EntryBuffer = &album_gui_widgets.album_artist_entrybuffer;
+
+    let album_artist_entrybuffer = &album_gui_widgets.album_artist_entrybuffer;
     assert_text!(album_artist_entrybuffer, "");
+
+    let album_year_entrybuffer = &album_gui_widgets.album_year_entrybuffer;
+    assert_text!(album_year_entrybuffer, "");
+
+    let album_year_entrybuffer = &album_gui_widgets.album_genre_entrybuffer;
+    assert_text!(album_year_entrybuffer, "");
+
+    let album_year_entrybuffer = &album_gui_widgets.album_title_entrybuffer;
+    assert_text!(album_year_entrybuffer, "");
 }

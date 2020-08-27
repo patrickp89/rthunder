@@ -1,6 +1,6 @@
 //! ## lib.rs
 //! Encapsulates the logic to initialize the application.
-//! Note: this was done ensure integration tests actually
+//! Note: this was done to ensure integration tests actually
 //! [do work](https://doc.rust-lang.org/stable/book/ch12-03-improving-error-handling-and-modularity.html#separation-of-concerns-for-binary-projects).
 
 use cd_helper::CdPointer;
@@ -32,25 +32,29 @@ pub fn run() {
         }
     };
 
-    let ui = create_ui(None, disc_pointer);
-    ui.show_all();
+    create_ui(None, disc_pointer).show_all();
 }
 
 pub fn create_ui(track_count: Option<u8>, disc_pointer: Option<CdPointer>) -> RthunderUi {
     // a mutable, global hashmap to store disc-related state:
-    let discs: Rc<RefCell<HashMap<u32, Disc>>> = Rc::new(RefCell::new(HashMap::new()));
+    let rc_discs: Rc<RefCell<HashMap<u32, Disc>>> = Rc::new(RefCell::new(HashMap::new()));
+    let rc_currently_chosen_disc: Rc<RefCell<Option<u32>>> = Rc::new(RefCell::new(None));
     // TODO: this feels like a ****** anti-pattern :|
 
     // create the GUI:
     let (album_grid, album_gui_widgets) = user_interface::create_album_entries();
-    let tracklist_scrollwindow = user_interface::create_tracklist_entries(track_count);
+    let tracklist_scrollwindow = user_interface::create_tracklist_entries(
+        rc_discs.clone(),
+        rc_currently_chosen_disc.clone(),
+    );
     let (toolbar, cddb_lookup_button, preferences_button, about_button) =
         user_interface::create_toolbar();
     let window = user_interface::create_main_window();
 
     return user_interface::glue_widgets_together(
         disc_pointer,
-        discs,
+        rc_discs,
+        rc_currently_chosen_disc,
         toolbar,
         album_grid,
         cddb_lookup_button,
