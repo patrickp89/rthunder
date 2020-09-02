@@ -43,15 +43,19 @@ pub fn create_ui(track_count: Option<u8>, disc_pointer: Option<CdPointer>) -> Rt
 
     // create the GUI:
     let (album_grid, album_gui_widgets) = user_interface::create_album_entries();
-    let tracklist_scrollwindow = user_interface::create_tracklist_entries(
+
+    let (tracklist_scrollwindow, tracklist_tree_view) = user_interface::create_tracklist_entries(
         rc_discs.clone(),
         rc_currently_chosen_disc.clone(),
+        track_count,
     );
+
     let (toolbar, cddb_lookup_button, preferences_button, about_button) =
         user_interface::create_toolbar();
+
     let window = user_interface::create_main_window();
 
-    return user_interface::glue_widgets_together(
+    user_interface::glue_widgets_together(
         disc_pointer,
         rc_discs,
         rc_currently_chosen_disc,
@@ -62,5 +66,6 @@ pub fn create_ui(track_count: Option<u8>, disc_pointer: Option<CdPointer>) -> Rt
         tracklist_scrollwindow,
         window,
         album_gui_widgets,
-    );
+        Rc::new(tracklist_tree_view),
+    )
 }

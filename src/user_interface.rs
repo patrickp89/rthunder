@@ -14,6 +14,7 @@ use std::rc::Rc;
 use crate::cd_helper::{destroy_disc_pointer, read_disc_toc, CdPointer};
 use crate::disc_info_db::{query_db, Disc};
 use crate::ripper::rip_cd;
+use std::ops::RangeInclusive;
 
 const APPLICATION_NAME: &str = "rthunder";
 const MAIN_WINDOW_DEFAULT_WIDTH: i32 = 800;
@@ -54,6 +55,7 @@ pub fn glue_widgets_together(
     tracklist_scrollwindow: ScrolledWindow,
     window: Window,
     album_gui_widgets: AlbumGuiWidgets,
+    tracklist_tree_view: Rc<TreeView>,
 ) -> RthunderUi {
     // TODO: disc_pointer must be stateful and _overridden_,
     // TODO: a) because the initial disc-opening didn't work, or
@@ -82,9 +84,11 @@ pub fn glue_widgets_together(
                 album_gui_widgets_clone2.clone(),
                 discs_clone2.clone(),
                 currently_chosen_disc_clone.clone(),
+                tracklist_tree_view.clone()
             )
         });
 
+    // destroy the disc pointer when the main window is closed:
     window.connect_delete_event(move |_, _| {
         match disc_pointer {
             Some(p) => {
@@ -307,6 +311,7 @@ fn choose_disc(
     rc_album_gui_widgets: Rc<RefCell<AlbumGuiWidgets>>,
     rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
     rc_currently_chosen_disc: Rc<RefCell<Option<u32>>>,
+    tracklist_tree_view: Rc<TreeView>
 ) {
     let discs: Ref<HashMap<u32, Disc>> = rc_discs.borrow();
     // TODO: this borrow ^^^ fails with a panic when __querying the disc__ a second time!
@@ -352,7 +357,9 @@ fn choose_disc(
                     album_gui_widgets
                         .album_year_entrybuffer
                         .set_text(year.as_str());
+
                     // TODO: change track items...
+                    // TODO: update_tracklist_treeview(tracklist_tree_view, ...);
                 }
                 None => eprintln!("Couldn't find disc with ID {} in hash map!", id),
             }
@@ -367,6 +374,9 @@ fn create_new_tracklist_liststore() -> ListStore {
     ])
 }
 
+/// If a disc is present, at least one matching album was found on
+/// CDDB and the user picked one from the combobox, create a
+/// track list model corresponding this very CDDB album.
 fn create_model_from_album_tracks(disc_option: Option<&Disc>) -> ListStore {
     let model = create_new_tracklist_liststore();
     match disc_option {
@@ -390,13 +400,28 @@ fn create_model_from_album_tracks(disc_option: Option<&Disc>) -> ListStore {
     }
 }
 
-fn create_dummy_tracklist_model() -> ListStore {
-    let default_track_count = 1 as u8;
+/// If no disc is present, the track list shoud be empty.
+fn create_empty_tracklist_model() -> ListStore {
     let model = create_new_tracklist_liststore();
-    for i in 0..default_track_count {
+    let default_track_count = 1 as u8;
+    let track_numbers = 0..=(default_track_count - 1);
+    blank_entries_tracklist_model(&model, track_numbers);
+    model
+}
+
+/// If a disc is present, but it wasn't found on CDDB, the track
+/// list should show n empty tracks.
+fn create_tracklist_model_for_trackcount(track_count: u8) -> ListStore {
+    let model = create_new_tracklist_liststore();
+    let track_numbers = 1..=track_count;
+    blank_entries_tracklist_model(&model, track_numbers);
+    model
+}
+
+fn blank_entries_tracklist_model(model: &ListStore, track_numbers: RangeInclusive<u8>) {
+    for i in track_numbers {
         model.insert_with_values(None, &[0, 1], &[&(i as u32), &""]);
     }
-    model
 }
 
 fn add_column(tree_view: &TreeView, model_id: i32, title: &str) -> i32 {
@@ -410,34 +435,63 @@ fn add_column(tree_view: &TreeView, model_id: i32, title: &str) -> i32 {
     tree_view.insert_column(&column, -1)
 }
 
-pub fn create_tracklist_entries(
+fn update_tracklist_treeview(
+    tracklist_tree_view: &TreeView,
     rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
     rc_currently_chosen_disc: Rc<RefCell<Option<u32>>>,
-) -> ScrolledWindow {
-    let tracklist_scrollwindow = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
-    let tree_view = TreeView::new();
-
-    // create the tracklist rows (i.e. the album tracks):
+    track_count: Option<u8>,
+) {
     let currently_chosen_disc = rc_currently_chosen_disc.borrow().clone();
     let album_tracks_model = match currently_chosen_disc {
-        // TODO: pick the current disc from the discs hashmap!
+        // a disc is inserted and a CDDB album has been picked:
         Some(disc_id) => {
             let discs: Ref<HashMap<u32, Disc>> = rc_discs.borrow();
             let disc_option = discs.get(&disc_id);
+            // TODO: pick the current disc from the discs hashmap!
             create_model_from_album_tracks(disc_option)
         }
-        None => create_dummy_tracklist_model(),
+
+        // there's either no disc present, or no album was picked:
+        None => {
+            match track_count {
+                Some(tc) => {
+                    // a track count was provided, therefore we create a
+                    // track list with tc tracks:
+                    create_tracklist_model_for_trackcount(tc)
+                }
+                // there's no track count given, hence we create an
+                // empty track list:
+                None => create_empty_tracklist_model(),
+            }
+        }
     };
-    tree_view.set_model(Some(&album_tracks_model));
+    tracklist_tree_view.set_model(Some(&album_tracks_model));
+}
+
+pub fn create_tracklist_entries(
+    rc_discs: Rc<RefCell<HashMap<u32, Disc>>>,
+    rc_currently_chosen_disc: Rc<RefCell<Option<u32>>>,
+    track_count: Option<u8>,
+) -> (ScrolledWindow, TreeView) {
+    let tracklist_scrollwindow = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
+    let tracklist_tree_view = TreeView::new();
+
+    // create the track list rows (i.e. the album tracks):
+    update_tracklist_treeview(
+        &tracklist_tree_view,
+        rc_discs,
+        rc_currently_chosen_disc,
+        track_count,
+    );
 
     // ...and the tracklist columns:
     let tracklist_column_titles = vec!["Track", "Title"];
     for (i, title) in tracklist_column_titles.iter().enumerate() {
-        add_column(&tree_view, i as i32, title);
+        add_column(&tracklist_tree_view, i as i32, title);
     }
 
-    tracklist_scrollwindow.add(&tree_view);
-    return tracklist_scrollwindow;
+    tracklist_scrollwindow.add(&tracklist_tree_view);
+    (tracklist_scrollwindow, tracklist_tree_view)
 }
 
 fn create_rip_button() -> gtk::Button {
